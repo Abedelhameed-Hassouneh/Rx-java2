@@ -1,0 +1,28 @@
+There are subtle behaviors in a relationship between an Observable and an
+Observer depending on how the Observable is implemented. A major
+characteristic to be aware of is cold versus hot Observables, which defines
+how Observables behave when there are multiple Observers.
+
+
+
+public class Launcher {
+    public static void main(String[] args) {
+        Connection conn = new ConnectionProviderFromUrl("jdbc:sqlite:/home/thomas/rexon_metals.db").get();
+        Database db = Database.from(conn);
+        Observable<String> customerNames = db.select("SELECT NAME FROM CUSTOMER").getAs(String.class);
+        customerNames.subscribe(s -> System.out.println(s));
+   }
+}
+
+This SQL-driven Observable is cold. Many Observables emitting from finite
+data sources such as databases, text files, or JSON are cold. It is still
+important to note how the source Observable is architected. RxJava-JDBC
+will run the query each time for each Observer. This means that if the data
+changes in between two subscriptions, the second Observer will get different
+emissions than the first one. But the Observable is still cold since it is
+replaying the query even if the resulting data changes from the underlying
+tables.
+
+Again, cold Observables will, in some shape or form, repeat the operation
+to generate these emissions to each Observer. Next, we will cover hot
+Observables that resemble events more than data.
